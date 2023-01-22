@@ -16,7 +16,7 @@ from telegram.ext import (
     Filters,
     MessageHandler,
     Updater
-    )
+)
 
 from .models import Player, Rebus, PollResult, RebusAttempt
 
@@ -40,8 +40,7 @@ from .tg_lib import (
     show_next_question,
     show_end_poll_message,
     show_message_about_draw_status
-    )
-
+)
 
 rollbar.init(os.getenv('ROLLBAR_TOKEN'))
 
@@ -55,6 +54,7 @@ def get_user(func):
         user, _ = Player.objects.get_or_create(telegram_id=chat_id)
         context.user_data['user'] = user
         return func(update, context)
+
     return wrapper
 
 
@@ -67,7 +67,8 @@ class TgDialogBot(object):
         self.updater.dispatcher.add_handler(CommandHandler('start', get_user(self.handle_users_reply)))
         self.updater.dispatcher.add_handler(CommandHandler('help', self.help_handler))
         self.updater.dispatcher.add_handler(CallbackQueryHandler(get_user(self.handle_users_reply)))
-        self.updater.dispatcher.add_handler(MessageHandler(Filters.text | Filters.contact, get_user(self.handle_users_reply)))
+        self.updater.dispatcher.add_handler(
+            MessageHandler(Filters.text | Filters.contact, get_user(self.handle_users_reply)))
         self.updater.dispatcher.add_handler(PollAnswerHandler(get_user(self.handle_users_reply)))
         self.updater.dispatcher.add_error_handler(self.error)
         self.job_queue = self.updater.job_queue
@@ -96,9 +97,8 @@ class TgDialogBot(object):
                 'current_rebus': '', 'successful_attempts': 0,
                 'current_question': 0, 'current_competition': '',
                 'poll_id': 0, 'poll_questions': ''
-                })
+            })
         else:
-
             self.update_user_data(chat_id, context)
             user_state = user.bot_state
             user_state = user_state if user_state else 'HANDLE_AUTH'
@@ -160,13 +160,13 @@ def handle_auth(bot, update, context):
                 chat_id=chat_id,
                 text=f'Введите Ваше Имя и Фамилию:',
                 reply_markup=telegram.ReplyKeyboardRemove()
-                )
+            )
             return 'HANDLE_AUTH'
         else:
             bot.send_message(
                 chat_id=chat_id,
                 text='Вы ввели неверный номер телефона. Попробуйте еще раз:'
-                )
+            )
             return 'HANDLE_AUTH'
     elif update.message.text:
         if 'Авторизоваться' in update.message.text:
@@ -202,12 +202,12 @@ def handle_select(bot, update, context):
             start_jobs(
                 chat_id, send_message_for_start_draw, context, once=True,
                 start_at=draws.start_at, name='send_message_for_start_draw'
-                )
+            )
             rest_hours_to_draw, rest_minutes_to_draw = rest_time_to_draw
             show_select_competition_keyboard(
                 bot, chat_id,
                 get_message_of_waiting_to_start_draw(rest_hours_to_draw, rest_minutes_to_draw)
-                )
+            )
         else:
             show_select_competition_keyboard(
                 bot, chat_id,
@@ -238,8 +238,8 @@ def handle_rebus(bot, update, context):
             Спасибо за участие в игре 👏
             Вы угадали {successful_attempts} из {MAX_PUZZLES_TO_WIN} ребусов''')
         return finish_rebus(bot, chat_id, context, message)
-    elif update.message.text == 'Начать игру' or\
-            'Продолжить игру' in update.message.text:
+    elif update.message.text == 'Начать игру' or \
+        'Продолжить игру' in update.message.text:
         return start_rebus(bot, chat_id, context)
     elif 'Продолжить (' in update.message.text:
         return go_next_rebus(bot, chat_id, context)
@@ -360,14 +360,14 @@ def handle_poll_messages(bot, update, context):
     chat_id = update.message.chat_id
     question_number = user_data['current_question']
 
-    if update.message.text == 'Опрос' or\
-            update.message.text == 'Пройти опрос заново':
+    if update.message.text == 'Опрос' or \
+        update.message.text == 'Пройти опрос заново':
         show_next_question(bot, chat_id, question_number, context)
         user_data['current_question'] = question_number + 1
         return 'HANDLE_POLL'
 
-    if 'Завершить опрос' in update.message.text or\
-            'Отказаться от опроса' in update.message.text:
+    if 'Завершить опрос' in update.message.text or \
+        'Отказаться от опроса' in update.message.text:
         PollResult.objects.del_unfinished_poll(user)
         return handle_end_competition(bot, chat_id, context)
 

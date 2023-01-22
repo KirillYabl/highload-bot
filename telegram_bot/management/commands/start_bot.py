@@ -22,7 +22,6 @@ class Command(BaseCommand):
 
 
 def start_bot():
-
     bot = TgDialogBot(
         settings.TELEGRAM_ACCESS_TOKEN,
         {
