@@ -5,6 +5,7 @@ from os import path  # FIXME Временное решения
 
 import telegram.ext
 import requests
+from django.contrib.sites.models import Site
 
 from telegram import (
     ReplyKeyboardMarkup,
@@ -71,11 +72,12 @@ def show_rebus(bot, chat_id, current_rebus, description=''):
         [['❓ Получить подсказку'], ['✖ Закончить игру']],
         one_time_keyboard=False, row_width=1, resize_keyboard=True
     )
-
-    if requests.get(current_rebus.image.url).ok:
+    domain = Site.objects.get_current().domain
+    if requests.get(f'http://{domain}{current_rebus.image.url}').ok or\
+        requests.get(f'https://{domain}{current_rebus.image.url}').ok:
         # for production server
         bot.send_photo(
-            chat_id=chat_id, photo=image.url, reply_markup=reply_markup,
+            chat_id=chat_id, photo=current_rebus.image.url, reply_markup=reply_markup,
             caption=' '.join([item for item in (current_rebus.text, description) if item])
         )
     else:
